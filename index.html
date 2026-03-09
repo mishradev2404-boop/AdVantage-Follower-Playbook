@@ -1,0 +1,715 @@
+<html lang="en" class="scroll-smooth" vid="0"><head vid="1">
+    <meta charset="UTF-8" vid="2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" vid="3">
+    <title vid="4">Your LinkedIn Follower Growth Playbook | AdVantage</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17" vid="5"></script>
+    <script vid="6">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        navy: '#1B3A6B',
+                        brightblue: '#1B6FDE',
+                        lightbg: '#F7F9FC',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style vid="7">
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        /* ── Fixed Download Button ── */
+        #download-btn {
+            position: fixed;
+            top: 20px;
+            right: 24px;
+            z-index: 9999;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1B6FDE;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(27,111,222,0.35);
+            transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+        }
+        #download-btn:hover {
+            background: #1556b8;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(27,111,222,0.45);
+        }
+        #download-btn svg {
+            flex-shrink: 0;
+        }
+
+        /* ── Generating overlay ── */
+        #pdf-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(27,58,107,0.55);
+            backdrop-filter: blur(4px);
+            z-index: 99999;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+        #pdf-overlay.active { display: flex; }
+        #pdf-overlay p {
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+        .pdf-spinner {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-white text-gray-600 antialiased selection:bg-brightblue selection:text-white w-full h-full min-h-screen" vid="8">
+
+    <!-- PDF generation overlay -->
+    <div id="pdf-overlay">
+        <div class="pdf-spinner"></div>
+        <p>Generating your PDF…</p>
+    </div>
+
+    <!-- Fixed Download as PDF Button -->
+    <button id="download-btn" onclick="downloadAsPDF()" title="Download as PDF">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download PDF
+    </button>
+
+    <!-- html2pdf + html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        function downloadAsPDF() {
+            const btn    = document.getElementById('download-btn');
+            const overlay = document.getElementById('pdf-overlay');
+            const footer = document.querySelector('footer');
+            const nav    = document.querySelector('nav');
+
+            // Show overlay, hide interactive elements from capture
+            overlay.classList.add('active');
+            btn.style.display = 'none';
+            if (footer) footer.style.display = 'none';
+            // Un-stick the nav so it doesn't repeat on every page
+            const navPos = nav ? nav.style.position : '';
+            if (nav) nav.style.position = 'static';
+
+            const element = document.body;
+
+            const opt = {
+                margin:      [8, 0, 8, 0],   // top/right/bottom/left in mm
+                filename:    'AdVantage-Follower-Playbook.pdf',
+                image:       { type: 'jpeg', quality: 0.97 },
+                html2canvas: {
+                    scale: 2,                  // retina-quality
+                    useCORS: true,
+                    logging: false,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: document.documentElement.scrollWidth
+                },
+                jsPDF: {
+                    unit: 'mm',
+                    format: 'a4',
+                    orientation: 'portrait',
+                    compress: true
+                },
+                pagebreak: {
+                    // Use smart mode — splits only at natural whitespace gaps
+                    mode: ['css', 'legacy'],
+                    avoid: [
+                        'section',
+                        'table',
+                        'tr',
+                        'li',
+                        '.rounded-2xl',
+                        '.rounded-3xl',
+                        'blockquote'
+                    ]
+                }
+            };
+
+            html2pdf()
+                .set(opt)
+                .from(element)
+                .save()
+                .then(function() {
+                    // Restore everything
+                    overlay.classList.remove('active');
+                    btn.style.display = '';
+                    if (footer) footer.style.display = '';
+                    if (nav) nav.style.position = navPos;
+                })
+                .catch(function() {
+                    overlay.classList.remove('active');
+                    btn.style.display = '';
+                    if (footer) footer.style.display = '';
+                    if (nav) nav.style.position = navPos;
+                });
+        }
+    </script>
+
+    
+    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100" vid="9">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between" vid="10">
+            <div class="flex items-center gap-3" vid="11">
+                
+                <svg class="w-8 h-8 text-navy" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" vid="12">
+                    <path d="M12 2L3 6V11.2C3 16.5 6.8 21.4 12 23C17.2 21.4 21 16.5 21 11.2V6L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vid="13"></path>
+                    <path d="M12 2L3 6V11.2C3 16.5 6.8 21.4 12 23C17.2 21.4 21 16.5 21 11.2V6L12 2Z" fill="currentColor" fill-opacity="0.1" vid="14"></path>
+                    <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vid="15"></path>
+                </svg>
+                <span class="text-2xl font-bold text-navy tracking-tight" vid="16">AdVantage</span>
+            </div>
+            <div class="hidden sm:flex items-center gap-4 text-sm font-medium text-gray-500" vid="17">
+                <span vid="18">Resource Library</span>
+                <span class="w-1 h-1 rounded-full bg-gray-300" vid="19"></span>
+                <span class="text-brightblue" vid="20">Growth Playbook</span>
+            </div>
+        </div>
+    </nav>
+
+    
+    <section class="relative pt-32 pb-24 px-6 overflow-hidden bg-white" vid="21">
+        
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none z-0" vid="22">
+            <div class="absolute top-20 left-10 w-64 h-64 bg-brightblue/5 rounded-full blur-3xl" vid="23"></div>
+            <div class="absolute bottom-10 right-10 w-80 h-80 bg-navy/5 rounded-full blur-3xl" vid="24"></div>
+        </div>
+
+        <div class="max-w-4xl mx-auto text-center relative z-10" vid="25">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 border border-blue-100 text-brightblue text-sm font-semibold mb-8" vid="26">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="27">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" vid="28"></path>
+                </svg>
+                AdVantage Exclusive Guide
+            </div>
+            
+            <h1 class="text-5xl md:text-6xl font-extrabold text-navy tracking-tight mb-6 leading-[1.15]" vid="29">
+                Your LinkedIn Follower <br class="hidden md:block" vid="30"> Growth Playbook
+            </h1>
+            
+            <p class="text-xl md:text-2xl text-gray-500 max-w-3xl mx-auto leading-relaxed" vid="31">
+                Everything you need to grow your LinkedIn Company Page following with paid ads — <span class="text-navy font-medium italic" vid="32">the right way.</span>
+            </p>
+        </div>
+    </section>
+
+    
+    <!-- Section 01: Followers Are Not a Vanity Metric -->
+    <section class="py-24 bg-white border-b border-gray-100" vid="33">
+        <div class="max-w-7xl mx-auto px-6" vid="34">
+            <div class="max-w-3xl mx-auto text-center mb-16" vid="35">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/5 text-navy text-xs font-bold uppercase tracking-widest mb-5" vid="36">Section 01</div>
+                <h2 class="text-3xl md:text-4xl font-bold text-navy mb-5 leading-tight" vid="37">Followers Are Not a Vanity Metric</h2>
+                <p class="text-xl text-gray-500 leading-relaxed" vid="38">Your Company Page follower count is one of the most strategically undervalued assets in your entire LinkedIn advertising ecosystem. Here's why it matters far more than most advertisers realise.</p>
+            </div>
+
+            <div class="max-w-3xl mx-auto mb-14" vid="39">
+                <div class="bg-lightbg border-l-4 border-brightblue rounded-r-2xl p-8" vid="40">
+                    <p class="text-navy text-xl font-semibold leading-relaxed italic" vid="41">“Most LinkedIn advertisers treat follower count as a status symbol. The smartest ones treat it as a strategic asset that reduces their cost-per-result over time.”</p>
+                    <p class="mt-4 text-sm font-bold text-brightblue uppercase tracking-wide" vid="42">— AdVantage Media</p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 mb-14" vid="43">
+                <div class="bg-lightbg rounded-2xl p-8 border border-gray-100" vid="44">
+                    <div class="w-12 h-12 rounded-xl bg-brightblue/10 flex items-center justify-center mb-5" vid="45">
+                        <svg class="w-6 h-6 text-brightblue" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="46"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" vid="47"></path></svg>
+                    </div>
+                    <h3 class="font-bold text-navy text-lg mb-3" vid="48">Organic Amplification</h3>
+                    <p class="text-gray-500 leading-relaxed" vid="49">Every follower you gain becomes a free distribution node. When you post organic content, it automatically surfaces in their feed — building a compounding, zero-cost reach channel with every new follower you add. The larger your follower base, the more impressions each post earns without any ad spend.</p>
+                </div>
+                <div class="bg-lightbg rounded-2xl p-8 border border-gray-100" vid="50">
+                    <div class="w-12 h-12 rounded-xl bg-brightblue/10 flex items-center justify-center mb-5" vid="51">
+                        <svg class="w-6 h-6 text-brightblue" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="52"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" vid="53"></path></svg>
+                    </div>
+                    <h3 class="font-bold text-navy text-lg mb-3" vid="54">Algorithm Trust Signal</h3>
+                    <p class="text-gray-500 leading-relaxed" vid="55">LinkedIn's algorithm heavily weights the first 60–90 minutes of engagement on any post. A larger follower base means more early interactions, signalling quality content to the platform. This triggers broader organic distribution — meaning pages with more followers get a built-in algorithmic advantage on every post they publish.</p>
+                </div>
+                <div class="bg-lightbg rounded-2xl p-8 border border-gray-100" vid="56">
+                    <div class="w-12 h-12 rounded-xl bg-brightblue/10 flex items-center justify-center mb-5" vid="57">
+                        <svg class="w-6 h-6 text-brightblue" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="58"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" vid="59"></path></svg>
+                    </div>
+                    <h3 class="font-bold text-navy text-lg mb-3" vid="60">Sustained Retargeting Pool</h3>
+                    <p class="text-gray-500 leading-relaxed" vid="61">Followers represent a warm, first-party audience that has already expressed genuine interest in your brand. LinkedIn lets you retarget Company Page followers directly in Campaign Manager — turning your organic follower growth into a high-intent paid audience you didn't have to pay to build from scratch.</p>
+                </div>
+            </div>
+
+            <!-- Social proof callout -->
+            <div class="max-w-3xl mx-auto bg-navy rounded-2xl p-8 text-white flex flex-col md:flex-row items-center gap-6" vid="62">
+                <div class="flex-shrink-0 w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center" vid="63">
+                    <svg class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="64"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" vid="65"></path></svg>
+                </div>
+                <div vid="66">
+                    <p class="font-bold text-lg leading-snug mb-2" vid="67">Your follower count appears on every single paid ad you run.</p>
+                    <p class="text-blue-200 leading-relaxed" vid="68">A higher follower count builds immediate social proof directly within the ad unit — increasing click-through rates and follow rates before a user has even read your copy. It's one of the few organic metrics that directly improves your paid ad performance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 02: Carousels & Videos -->
+    <section class="py-24 bg-lightbg border-y border-gray-100" vid="69">
+        <div class="max-w-7xl mx-auto px-6" vid="70">
+            <div class="max-w-3xl mx-auto text-center mb-16" vid="71">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/5 text-navy text-xs font-bold uppercase tracking-widest mb-5" vid="72">Section 02</div>
+                <h2 class="text-3xl md:text-4xl font-bold text-navy mb-5 leading-tight" vid="73">Carousels and Videos Drive the Most Social Actions</h2>
+                <p class="text-xl text-gray-500 leading-relaxed" vid="74">Your ad format is just as strategic as your targeting. Choosing the right creative format is the single fastest way to accelerate follower growth.</p>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-16 items-start" vid="75">
+                <div vid="76">
+                    <div class="space-y-6 text-lg text-gray-600 leading-relaxed" vid="77">
+                        <p vid="78"><strong vid="79">Carousel ads and video ads generate the highest volume of social actions</strong> — likes, comments, shares, and reposts — of any format on LinkedIn. This isn't a coincidence. Multi-frame and motion-based content demands more cognitive engagement from the viewer, which translates directly into more interactions.</p>
+                        <p vid="80">Social actions are the engine of viral reach. Every time a user interacts with your ad, that interaction is visible to their entire first-degree network — organically. You earn additional, highly-qualified impressions without paying for them. This is sometimes called the "social proof flywheel."</p>
+                        <p vid="81">Because carousel and video ads build social momentum faster, the algorithm rewards them with broader distribution. As engagement grows, reach grows, followers grow — and each new follower makes your next post more powerful.</p>
+                    </div>
+                    <!-- Pro tip -->
+                    <div class="mt-8 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm" vid="82">
+                        <p class="text-xs font-bold uppercase tracking-widest text-brightblue mb-3" vid="83">Pro Tip</p>
+                        <p class="text-navy font-semibold leading-relaxed" vid="84">For carousels, lead with a provocative insight or surprising stat on the first card. The first card is the hook — if it doesn't stop the scroll, no one sees the rest.</p>
+                    </div>
+                    <!-- Format comparison table -->
+                    <div class="mt-8 overflow-hidden rounded-2xl border border-gray-100 shadow-sm" vid="85">
+                        <table class="w-full text-sm" vid="86">
+                            <thead vid="87">
+                                <tr class="bg-navy text-white" vid="88">
+                                    <th class="text-left p-4 font-semibold" vid="89">Format</th>
+                                    <th class="text-center p-4 font-semibold" vid="90">Engagement</th>
+                                    <th class="text-center p-4 font-semibold" vid="91">Share Rate</th>
+                                    <th class="text-center p-4 font-semibold" vid="92">Best For</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-100" vid="93">
+                                <tr vid="94">
+                                    <td class="p-4 font-semibold text-navy" vid="95">Carousel</td>
+                                    <td class="p-4 text-center" vid="96"><span class="text-green-600 font-bold" vid="97">★★★★★</span></td>
+                                    <td class="p-4 text-center" vid="98"><span class="text-green-600 font-bold" vid="99">★★★★</span></td>
+                                    <td class="p-4 text-center text-gray-500" vid="100">Thought leadership</td>
+                                </tr>
+                                <tr class="bg-lightbg" vid="101">
+                                    <td class="p-4 font-semibold text-navy" vid="102">Video</td>
+                                    <td class="p-4 text-center" vid="103"><span class="text-green-600 font-bold" vid="104">★★★★</span></td>
+                                    <td class="p-4 text-center" vid="105"><span class="text-green-600 font-bold" vid="106">★★★★★</span></td>
+                                    <td class="p-4 text-center text-gray-500" vid="107">Brand storytelling</td>
+                                </tr>
+                                <tr vid="108">
+                                    <td class="p-4 font-semibold text-navy" vid="109">Single Image</td>
+                                    <td class="p-4 text-center" vid="110"><span class="text-yellow-500 font-bold" vid="111">★★★</span></td>
+                                    <td class="p-4 text-center" vid="112"><span class="text-yellow-500 font-bold" vid="113">★★</span></td>
+                                    <td class="p-4 text-center text-gray-500" vid="114">Direct response</td>
+                                </tr>
+                                <tr class="bg-lightbg" vid="115">
+                                    <td class="p-4 font-semibold text-navy" vid="116">Text Only</td>
+                                    <td class="p-4 text-center" vid="117"><span class="text-red-400 font-bold" vid="118">★★</span></td>
+                                    <td class="p-4 text-center" vid="119"><span class="text-red-400 font-bold" vid="120">★</span></td>
+                                    <td class="p-4 text-center text-gray-500" vid="121">Announcements</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="space-y-6" vid="122">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 transition-transform hover:-translate-y-1 duration-300" vid="123">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-brightblue" vid="124">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="125"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" vid="126"></path></svg>
+                        </div>
+                        <div vid="127">
+                            <h3 class="font-bold text-navy text-xl mb-1" vid="128">3x More Engagement</h3>
+                            <p class="text-gray-500" vid="129">Carousels generate up to 3x more engagement than standard static single-image ads — giving you triple the social proof signals per dollar spent.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 transition-transform hover:-translate-y-1 duration-300" vid="130">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-brightblue" vid="131">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="132"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" vid="133"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" vid="134"></path></svg>
+                        </div>
+                        <div vid="135">
+                            <h3 class="font-bold text-navy text-xl mb-1" vid="136">Highest Share Rates</h3>
+                            <p class="text-gray-500" vid="137">Video ads consistently drive the highest share and repost rates across all LinkedIn ad formats — turning every viewer into a potential distributor of your content.</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-start gap-4 transition-transform hover:-translate-y-1 duration-300" vid="138">
+                        <div class="flex-shrink-0 w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-brightblue" vid="139">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="140"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" vid="141"></path></svg>
+                        </div>
+                        <div vid="142">
+                            <h3 class="font-bold text-navy text-xl mb-1" vid="143">Free Organic Exposure</h3>
+                            <p class="text-gray-500" vid="144">Every share or comment exposes your brand to an entirely new second-degree audience for free — earned impressions that cost you nothing but compound your results significantly.</p>
+                        </div>
+                    </div>
+                    <!-- What great carousel content looks like -->
+                    <div class="bg-navy text-white rounded-2xl p-6" vid="145">
+                        <p class="text-xs font-bold uppercase tracking-widest text-blue-300 mb-4" vid="146">What Great Carousel Content Looks Like</p>
+                        <ul class="space-y-3" vid="147">
+                            <li class="flex items-start gap-3" vid="148"><span class="mt-1 w-5 h-5 rounded-full bg-brightblue flex-shrink-0 flex items-center justify-center text-xs font-bold" vid="149">1</span><span class="text-blue-100" vid="150">Card 1: A bold, counterintuitive stat or claim that demands to be read</span></li>
+                            <li class="flex items-start gap-3" vid="151"><span class="mt-1 w-5 h-5 rounded-full bg-brightblue flex-shrink-0 flex items-center justify-center text-xs font-bold" vid="152">2</span><span class="text-blue-100" vid="153">Cards 2–7: One insight per card, short copy, easy to scan</span></li>
+                            <li class="flex items-start gap-3" vid="154"><span class="mt-1 w-5 h-5 rounded-full bg-brightblue flex-shrink-0 flex items-center justify-center text-xs font-bold" vid="155">3</span><span class="text-blue-100" vid="156">Final card: A soft CTA to follow your page for more insights like this</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <section class="py-24 bg-white" vid="157">
+        <div class="max-w-7xl mx-auto px-6" vid="158">
+            <div class="max-w-3xl mx-auto text-center mb-16" vid="159">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/5 text-navy text-xs font-bold uppercase tracking-widest mb-5" vid="160">Section 03</div>
+                <h2 class="text-3xl md:text-4xl font-bold text-navy mb-5 leading-tight" vid="161">Choose Engagement — It Unlocks the Follow Button</h2>
+                <p class="text-xl text-gray-500 leading-relaxed" vid="162">The objective you select in LinkedIn Campaign Manager does more than just tell the algorithm what to optimise for — it physically changes what your ad looks like.</p>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-16 items-center" vid="163">
+                
+                <div class="order-2 lg:order-1 relative" vid="164">
+                    
+                    <div class="absolute inset-0 bg-gradient-to-tr from-blue-50 to-gray-50 rounded-3xl transform -rotate-2 scale-105 z-0" vid="165"></div>
+                    
+                    <div class="relative z-10 space-y-6" vid="166">
+                        
+                        <div class="bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 p-5 mx-auto max-w-md" vid="167">
+                            <div class="flex items-start justify-between mb-4" vid="168">
+                                <div class="flex items-start gap-3" vid="169">
+                                    <div class="w-12 h-12 bg-navy rounded shadow-sm flex items-center justify-center" vid="170">
+                                        <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" vid="171">
+                                            <path d="M12 2L3 6V11.2C3 16.5 6.8 21.4 12 23C17.2 21.4 21 16.5 21 11.2V6L12 2Z" fill="currentColor" vid="172"></path>
+                                        </svg>
+                                    </div>
+                                    <div vid="173">
+                                        <div class="font-bold text-[15px] text-gray-900 leading-none mb-1" vid="174">AdVantage SaaS</div>
+                                        <div class="text-[12px] text-gray-500" vid="175">14,203 followers</div>
+                                        <div class="text-[12px] text-gray-400" vid="176">Promoted</div>
+                                    </div>
+                                </div>
+                                
+                                <button class="flex items-center gap-1 text-[#0a66c2] font-semibold text-[15px] hover:bg-blue-50 px-3 py-1.5 rounded-md transition-colors relative group" vid="177">
+                                    <span class="absolute -inset-2 rounded-lg border-2 border-brightblue border-dashed opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" vid="178"></span>
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" vid="179">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" vid="180"></path>
+                                    </svg>
+                                    Follow
+                                </button>
+                            </div>
+                            <div class="space-y-2 mb-4" vid="181">
+                                <div class="h-3 bg-gray-100 rounded w-full" vid="182"></div>
+                                <div class="h-3 bg-gray-100 rounded w-5/6" vid="183"></div>
+                                <div class="h-3 bg-gray-100 rounded w-4/6" vid="184"></div>
+                            </div>
+                            <div class="h-48 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center" vid="185">
+                                <svg class="w-10 h-10 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="186">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" vid="187"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        
+                        <div class="pl-6 border-l-4 border-brightblue bg-blue-50/80 py-5 pr-6 rounded-r-xl max-w-md mx-auto shadow-sm" vid="188">
+                            <p class="text-navy font-semibold text-lg leading-snug" vid="189">
+                                Every Engagement objective ad displays a Follow button in the top-right corner — turning every impression into a potential follower.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div class="order-1 lg:order-2" vid="190">
+                    <div class="space-y-6 text-lg text-gray-600 leading-relaxed" vid="191">
+                        <p vid="192">Many advertisers mistakenly choose Brand Awareness or Website Visits when trying to grow their audience. However, there is a distinct structural advantage to selecting the <strong vid="193">Engagement objective</strong> in LinkedIn Campaign Manager.</p>
+                        <p vid="194">When you run campaigns under the Engagement objective, LinkedIn automatically alters the ad unit itself. Every single ad is displayed with an extra <strong vid="195">"+ Follow"</strong> button prominently pinned in the top-right corner of the creative header.</p>
+                        <p vid="196">Other objectives do not consistently show this button. This one UI feature alone dramatically increases your follower conversion rate because it removes friction entirely. Users don't need to click through to your Company Page, wait for it to load, and then find the follow button. They can follow you instantly, directly from their feed.</p>
+                    </div>
+                    <!-- Objective comparison -->
+                    <div class="mt-8 overflow-hidden rounded-2xl border border-gray-100 shadow-sm" vid="197">
+                        <div class="bg-navy px-5 py-3" vid="198">
+                            <p class="text-white font-bold text-sm" vid="199">Objective Comparison: Does the Follow Button Appear?</p>
+                        </div>
+                        <table class="w-full text-sm bg-white" vid="200">
+                            <tbody class="divide-y divide-gray-100" vid="201">
+                                <tr class="bg-green-50" vid="202">
+                                    <td class="p-4 font-semibold text-navy" vid="203">✅ Engagement</td>
+                                    <td class="p-4 text-green-700 font-semibold" vid="204">Always shown — prominently in the top-right</td>
+                                </tr>
+                                <tr vid="205">
+                                    <td class="p-4 font-semibold text-navy" vid="206">⚠️ Brand Awareness</td>
+                                    <td class="p-4 text-gray-500" vid="207">Inconsistent — depends on ad format</td>
+                                </tr>
+                                <tr class="bg-lightbg" vid="208">
+                                    <td class="p-4 font-semibold text-navy" vid="209">❌ Website Visits</td>
+                                    <td class="p-4 text-red-500 font-medium" vid="210">Not shown — CTA replaced by URL click</td>
+                                </tr>
+                                <tr vid="211">
+                                    <td class="p-4 font-semibold text-navy" vid="212">❌ Lead Generation</td>
+                                    <td class="p-4 text-red-500 font-medium" vid="213">Not shown — CTA replaced by form open</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6 bg-blue-50 border border-blue-100 rounded-2xl p-6" vid="214">
+                        <p class="text-xs font-bold uppercase tracking-widest text-brightblue mb-2" vid="215">The Takeaway</p>
+                        <p class="text-navy font-semibold leading-relaxed" vid="216">If follower growth is your goal, Engagement is the only objective that makes structural sense. Every other objective actively works against you by hiding or removing the follow action from the ad unit.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <section class="py-24 bg-lightbg border-y border-gray-100" vid="217">
+        <div class="max-w-4xl mx-auto px-6 text-center mb-16" vid="218">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/5 text-navy text-xs font-bold uppercase tracking-widest mb-5" vid="219">Section 04</div>
+            <h2 class="text-3xl md:text-4xl font-bold text-navy mb-6" vid="220">How LinkedIn's Engagement Optimisation Actually Works</h2>
+            <p class="text-xl text-gray-600 leading-relaxed" vid="221">Beyond the UI changes, selecting the Engagement objective fundamentally alters how LinkedIn's algorithm bids and delivers your ads in the auction — and understanding this gives you a real edge.</p>
+        </div>
+
+                <div class="max-w-6xl mx-auto px-6" vid="222">
+            <div class="grid md:grid-cols-3 gap-8 mb-16" vid="223">
+                
+                <div class="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm relative overflow-hidden group" vid="224">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110" vid="225"></div>
+                    <div class="w-14 h-14 bg-brightblue rounded-xl flex items-center justify-center text-white mb-6 shadow-md" vid="226">
+                        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="227">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" vid="228"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-navy mb-3" vid="229">1. Algorithmic Targeting</h3>
+                    <p class="text-gray-600 leading-relaxed" vid="230">
+                        LinkedIn's algorithm is instructed to find and serve your ads specifically to members who have a historical track record of taking actions—liking, commenting, sharing, or following—rather than passive scrollers.
+                    </p>
+                </div>
+
+                
+                <div class="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm relative overflow-hidden group" vid="231">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110" vid="232"></div>
+                    <div class="w-14 h-14 bg-brightblue rounded-xl flex items-center justify-center text-white mb-6 shadow-md" vid="233">
+                        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="234">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" vid="235"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-navy mb-3" vid="236">2. Lower Cost Per Action</h3>
+                    <p class="text-gray-600 leading-relaxed" vid="237">
+                        Because the algorithm self-selects for highly receptive audiences, your Cost Per Engagement (CPE) tends to be significantly lower than broad CPM buying. Your budget works harder.
+                    </p>
+                </div>
+
+                
+                <div class="bg-white rounded-2xl p-8 border border-gray-100 shadow-sm relative overflow-hidden group" vid="238">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full -z-10 transition-transform group-hover:scale-110" vid="239"></div>
+                    <div class="w-14 h-14 bg-brightblue rounded-xl flex items-center justify-center text-white mb-6 shadow-md" vid="240">
+                        <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="241">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" vid="242"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-navy mb-3" vid="243">3. Compounding Effect</h3>
+                    <p class="text-gray-600 leading-relaxed" vid="244">
+                        Over time, this builds a flywheel: more initial engagement signals lead to more organic reach, which drives more followers, creating stronger social proof on all your future ad campaigns.
+                    </p>
+                </div>
+            </div>
+
+            <!-- How the auction works -->
+            <div class="max-w-4xl mx-auto mt-4" vid="245">
+                <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden" vid="246">
+                    <div class="bg-navy px-8 py-5" vid="247">
+                        <h3 class="text-white font-bold text-xl" vid="248">The Engagement Auction: Step by Step</h3>
+                        <p class="text-blue-200 text-sm mt-1" vid="249">How LinkedIn decides who sees your ad when you run on the Engagement objective</p>
+                    </div>
+                    <div class="divide-y divide-gray-100" vid="250">
+                        <div class="flex items-start gap-6 px-8 py-6" vid="251">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-brightblue text-white font-bold flex items-center justify-center" vid="252">1</div>
+                            <div vid="253">
+                                <h4 class="font-bold text-navy mb-1" vid="254">You set your bid and audience</h4>
+                                <p class="text-gray-500 leading-relaxed" vid="255">You define your targeting parameters and either set a manual bid or use LinkedIn's automated bidding. For follower growth, we recommend starting with automated bidding to let the algorithm find the most cost-efficient engagers.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-6 px-8 py-6 bg-lightbg" vid="256">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-brightblue text-white font-bold flex items-center justify-center" vid="257">2</div>
+                            <div vid="258">
+                                <h4 class="font-bold text-navy mb-1" vid="259">LinkedIn scores each member for engagement propensity</h4>
+                                <p class="text-gray-500 leading-relaxed" vid="260">Before serving your ad to anyone, LinkedIn's system scores every potential impression based on that member's historical engagement behaviour — how often they like, comment, share, or follow from ads. High-propensity members get prioritised.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-6 px-8 py-6" vid="261">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-brightblue text-white font-bold flex items-center justify-center" vid="262">3</div>
+                            <div vid="263">
+                                <h4 class="font-bold text-navy mb-1" vid="264">The algorithm bids more for high-engagement profiles</h4>
+                                <p class="text-gray-500 leading-relaxed" vid="265">The system will automatically bid higher to win impressions from members who are statistically more likely to engage. This means your CPM may vary across audiences, but your Cost Per Engagement (CPE) stays low because you're only paying for receptive audiences.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-6 px-8 py-6 bg-lightbg" vid="266">
+                            <div class="flex-shrink-0 w-10 h-10 rounded-full bg-brightblue text-white font-bold flex items-center justify-center" vid="267">4</div>
+                            <div vid="268">
+                                <h4 class="font-bold text-navy mb-1" vid="269">Early engagement triggers organic amplification</h4>
+                                <p class="text-gray-500 leading-relaxed" vid="270">Because LinkedIn's algorithm favours content with strong early engagement signals, the interactions generated by your Engagement-objective campaign can trigger broader organic distribution — extending your reach beyond your paid audience at no additional cost.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    
+    <section class="py-24 bg-white relative overflow-hidden" vid="271">
+        
+        <div class="absolute inset-0 z-0" style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 40px 40px; opacity: 0.3;" vid="272"></div>
+        
+        <div class="max-w-7xl mx-auto px-6 relative z-10" vid="273">
+            <div class="text-center mb-16 max-w-3xl mx-auto" vid="274">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-navy/5 text-navy text-xs font-bold uppercase tracking-widest mb-5" vid="275">Section 05</div>
+                <h2 class="text-3xl md:text-4xl font-bold text-navy mb-4" vid="276">Spotlight Ads: The Hidden Gem of LinkedIn Advertising</h2>
+                <p class="text-2xl font-semibold text-brightblue" vid="277">Low CPMs. Low CPCs. Massive Reach Potential.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-12 gap-12 items-center" vid="278">
+                <div class="lg:col-span-7 space-y-6 text-lg text-gray-600 leading-relaxed" vid="279">
+                    <p vid="280">Spotlight Ads (Dynamic Ads) are one of the most forgotten and underutilised ad formats on LinkedIn. Most advertisers overlook them because they live in the right-rail or sidebar rather than in the main news feed — but this positioning is exactly why they are so highly efficient.</p>
+                    <p vid="281">Because fewer advertisers compete for Spotlight Ad inventory, CPMs are significantly lower than Sponsored Content in the feed. LinkedIn's right-rail is a less contested auction, which means your budget stretches much further — you get more impressions per pound or dollar spent.</p>
+                    <p vid="282">When paired with a broad audience (e.g., all LinkedIn members in a target country, or an entire job function), Spotlight Ads can deliver extremely high reach at a fraction of the cost. For follower growth campaigns specifically, they work as a high-frequency, low-cost touchpoint that keeps your brand continuously visible to potential followers.</p>
+                    <p vid="283">Spotlight Ads are also dynamic by nature — LinkedIn automatically pulls in the viewer's profile photo and personalises the copy (e.g., "[First Name], follow AdVantage for expert LinkedIn tips"). This personalisation dramatically increases relevance and click-through, without requiring you to create individual variations.</p>
+                    <!-- When to use -->
+                    <div class="bg-lightbg rounded-2xl p-6 border border-gray-100" vid="284">
+                        <p class="text-xs font-bold uppercase tracking-widest text-brightblue mb-4" vid="285">When to Use Spotlight Ads for Follower Growth</p>
+                        <div class="grid grid-cols-2 gap-4" vid="286">
+                            <div class="bg-white rounded-xl p-4 border border-gray-100" vid="287">
+                                <p class="font-bold text-navy text-sm mb-1" vid="288">✅ Use them when...</p>
+                                <ul class="text-sm text-gray-500 space-y-1" vid="289">
+                                    <li vid="290">You have a limited budget</li>
+                                    <li vid="291">You want maximum reach</li>
+                                    <li vid="292">You're targeting broad audiences</li>
+                                    <li vid="293">You want always-on brand presence</li>
+                                </ul>
+                            </div>
+                            <div class="bg-white rounded-xl p-4 border border-gray-100" vid="294">
+                                <p class="font-bold text-navy text-sm mb-1" vid="295">⚠️ Watch out for...</p>
+                                <ul class="text-sm text-gray-500 space-y-1" vid="296">
+                                    <li vid="297">Ad fatigue in small audiences</li>
+                                    <li vid="298">Lower engagement vs. feed ads</li>
+                                    <li vid="299">Right-rail only (desktop)</li>
+                                    <li vid="300">Less creative control</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-5 bg-lightbg p-8 rounded-3xl border border-gray-200 shadow-inner" vid="301">
+                    <h4 class="text-navy font-bold text-xl mb-6 flex items-center gap-2" vid="302">
+                        <svg class="w-5 h-5 text-brightblue" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="303">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" vid="304"></path>
+                        </svg>
+                        Why Spotlight Ads Win:
+                    </h4>
+                    
+                    <ul class="space-y-5" vid="305">
+                        <li class="flex items-start gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100" vid="306">
+                            <div class="mt-1 w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 text-brightblue" vid="307">
+                                <span class="font-bold text-sm" vid="308">1</span>
+                            </div>
+                            <p class="text-gray-700 font-medium" vid="309">Spotlight Ads often have <span class="text-navy font-bold" vid="310">50–70% lower CPMs</span> than main feed placements.</p>
+                        </li>
+                        <li class="flex items-start gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100" vid="311">
+                            <div class="mt-1 w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 text-brightblue" vid="312">
+                                <span class="font-bold text-sm" vid="313">2</span>
+                            </div>
+                            <p class="text-gray-700 font-medium" vid="314">Broad audiences + Spotlight Ads = <span class="text-navy font-bold" vid="315">maximum reach efficiency</span> for brand awareness.</p>
+                        </li>
+                        <li class="flex items-start gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100" vid="316">
+                            <div class="mt-1 w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0 text-brightblue" vid="317">
+                                <span class="font-bold text-sm" vid="318">3</span>
+                            </div>
+                            <p class="text-gray-700 font-medium" vid="319">Most advertisers ignore them entirely — giving you a <span class="text-navy font-bold" vid="320">major competitive advantage</span> in the auction.</p>
+                        </li>
+                    </ul>
+
+                    
+                    <div class="mt-8 bg-white border border-gray-200 rounded-lg p-4 shadow-sm relative" vid="321">
+                        <div class="absolute top-2 right-2 text-[10px] text-gray-400" vid="322">Ad</div>
+                        <div class="flex flex-col items-center text-center" vid="323">
+                            <div class="flex items-center gap-4 mb-3" vid="324">
+                                <div class="w-10 h-10 rounded-full bg-gray-200 border border-gray-300" vid="325"></div>
+                                <svg class="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" vid="326">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" vid="327"></path>
+                                </svg>
+                                <div class="w-10 h-10 rounded shadow-sm bg-navy flex items-center justify-center" vid="328">
+                                    <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" vid="329">
+                                        <path d="M12 2L3 6V11.2C3 16.5 6.8 21.4 12 23C17.2 21.4 21 16.5 21 11.2V6L12 2Z" fill="currentColor" vid="330"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-800 mb-3" vid="331">Firstname, elevate your career with AdVantage insights.</p>
+                            <button class="w-full py-1.5 border border-brightblue text-brightblue rounded hover:bg-blue-50 text-sm font-semibold transition-colors" vid="332">
+                                Follow
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <footer class="bg-navy text-white py-24 relative overflow-hidden" vid="333">
+        
+        <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-0" vid="334">
+            <div class="absolute -top-[20%] -right-[10%] w-[50%] h-[150%] bg-brightblue/20 rounded-full blur-3xl transform rotate-12" vid="335"></div>
+            <div class="absolute -bottom-[20%] -left-[10%] w-[50%] h-[150%] bg-blue-900/50 rounded-full blur-3xl transform -rotate-12" vid="336"></div>
+        </div>
+
+        <div class="max-w-4xl mx-auto px-6 text-center relative z-10" vid="337">
+            <h2 class="text-4xl md:text-5xl font-bold mb-8 leading-tight" vid="338">
+                Ready to Grow Your LinkedIn Following?
+            </h2>
+            <p class="text-xl text-blue-100 mb-10 max-w-2xl mx-auto" vid="339">
+                Stop wasting budget on inefficient objectives. Let our experts build a follower growth engine that actually converts.
+            </p>
+            
+            <a href="#" class="inline-block bg-brightblue hover:bg-blue-600 text-white text-lg font-bold py-4 px-10 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl mb-20" vid="340">
+                Book a Free Strategy Call
+            </a>
+
+            <div class="pt-12 border-t border-blue-800/50 flex flex-col items-center justify-center gap-4" vid="341">
+                <div class="flex items-center gap-2 opacity-90" vid="342">
+                    <svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" vid="343">
+                        <path d="M12 2L3 6V11.2C3 16.5 6.8 21.4 12 23C17.2 21.4 21 16.5 21 11.2V6L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vid="344"></path>
+                        <path d="M12 2L3 6V11.2C3 16.5 6.8 21.4 12 23C17.2 21.4 21 16.5 21 11.2V6L12 2Z" fill="currentColor" fill-opacity="0.2" vid="345"></path>
+                        <path d="M9 12L11 14L15 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vid="346"></path>
+                    </svg>
+                    <span class="text-2xl font-bold tracking-tight" vid="347">AdVantage</span>
+                </div>
+                <p class="text-blue-200 text-sm font-medium tracking-wide uppercase" vid="348">LinkedIn Ads, Done Right.</p>
+            </div>
+        </div>
+    </footer>
+
+
+</body></html>
